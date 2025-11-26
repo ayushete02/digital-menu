@@ -36,8 +36,8 @@ model VerificationCode {
   userId String?
   user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
 
-  @@index([email])
-  @@index([expiresAt])
+  @@index([email, expiresAt])
+  @@index([email, consumedAt])
 }
 
 model Session {
