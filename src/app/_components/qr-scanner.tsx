@@ -26,10 +26,10 @@ export function QrScanner() {
         (decodedText) => {
           // Handle successful scan
           console.log("QR Code detected:", decodedText);
-          
+
           // Stop scanning
           stopScanning();
-          
+
           // Navigate to the scanned URL
           if (decodedText.startsWith("http")) {
             // If it's a full URL, extract the path
@@ -54,7 +54,9 @@ export function QrScanner() {
       setIsScanning(true);
     } catch (err) {
       console.error("Failed to start scanner:", err);
-      setError("Failed to access camera. Please ensure camera permissions are granted.");
+      setError(
+        "Failed to access camera. Please ensure camera permissions are granted."
+      );
       setIsScanning(false);
     }
   };

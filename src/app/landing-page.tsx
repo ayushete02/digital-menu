@@ -77,8 +77,9 @@ export default function LandingPage() {
                 How It Works
               </h3>
               <p className="text-sm text-muted-foreground">
-                Use the scanner above to scan any restaurant&apos;s menu QR code, or
-                browse all available restaurants using the button above.
+                Use the scanner above to scan any restaurant&apos;s menu QR
+                code, or browse all available restaurants using the button
+                above.
               </p>
             </div>
           </div>
