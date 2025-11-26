@@ -243,34 +243,58 @@ export const DashboardView = ({
         </Dialog>
       </section>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
         {restaurants?.map((restaurant) => (
-          <Card key={restaurant.id} className="relative overflow-hidden">
-            <CardHeader>
+          <Card key={restaurant.id} className="relative overflow-hidden hover:shadow-lg transition-shadow">
+            <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2">
                 <Store className="h-5 w-5 text-primary" />
                 <span>{restaurant.name}</span>
               </CardTitle>
               <CardDescription>{restaurant.location}</CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-wrap gap-3">
-              <Button
-                variant="secondary"
-                onClick={() => handleCopyLink(restaurant.slug)}
-              >
-                <Share className="mr-2 h-4 w-4" /> Copy share link
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() =>
-                  router.push(`/dashboard/restaurants/${restaurant.id}`)
-                }
-              >
-                Manage menu
-              </Button>
-              <Button variant="ghost" onClick={() => handleShowQr(restaurant)}>
-                <QrCode className="mr-2 h-4 w-4" /> Show QR code
-              </Button>
+            <CardContent className="space-y-3">
+              {/* Share Link Section */}
+              <div className="rounded-lg bg-muted/50 p-3 space-y-2">
+                <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  <Share className="h-3 w-3" />
+                  <span>Share Link</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 rounded bg-background px-2 py-1.5 text-xs font-mono truncate">
+                    {origin}/menu/{restaurant.slug}
+                  </code>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => handleCopyLink(restaurant.slug)}
+                    className="shrink-0"
+                  >
+                    <Share className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-wrap gap-2 pt-1">
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() =>
+                    router.push(`/dashboard/restaurants/${restaurant.id}`)
+                  }
+                >
+                  Manage Menu
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleShowQr(restaurant)}
+                >
+                  <QrCode className="mr-1.5 h-4 w-4" /> QR Code
+                </Button>
+              </div>
             </CardContent>
           </Card>
         ))}
@@ -301,44 +325,58 @@ export const DashboardView = ({
       >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>QR code</DialogTitle>
+            <DialogTitle>Menu QR Code</DialogTitle>
             <DialogDescription>
-              Share this code with guests so they can open the menu instantly.
+              Customers can scan this code to instantly access your digital menu
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col items-center gap-4 py-4">
             {qrRestaurant ? (
               <>
-                <div className="rounded-2xl bg-white p-4 shadow-sm">
+                <div className="space-y-2 text-center">
+                  <h3 className="font-semibold text-lg">{qrRestaurant.name}</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {qrRestaurant.location}
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-white p-6 shadow-lg border-2 border-primary/10">
                   <QRCode
                     id="restaurant-qr-code"
                     value={menuLink || ""}
                     size={200}
-                    bgColor="var(--color-card)"
-                    fgColor="var(--color-foreground)"
+                    bgColor="#ffffff"
+                    fgColor="#000000"
                   />
                 </div>
-                <div className="text-center text-sm text-muted-foreground">
-                  {menuLink}
-                </div>
-                <div className="flex w-full flex-col gap-2 sm:flex-row">
-                  <Button
-                    type="button"
-                    className="flex-1"
-                    onClick={() =>
-                      qrRestaurant && handleCopyLink(qrRestaurant.slug)
-                    }
-                  >
-                    Copy link
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    className="flex-1"
-                    onClick={handleDownloadQr}
-                  >
-                    Download SVG
-                  </Button>
+                <div className="w-full space-y-3">
+                  <div className="rounded-lg bg-muted/50 p-3">
+                    <div className="text-xs font-medium text-muted-foreground mb-1.5">
+                      Menu URL
+                    </div>
+                    <code className="text-xs font-mono break-all">
+                      {menuLink}
+                    </code>
+                  </div>
+                  <div className="flex w-full flex-col gap-2 sm:flex-row">
+                    <Button
+                      type="button"
+                      className="flex-1"
+                      onClick={() =>
+                        qrRestaurant && handleCopyLink(qrRestaurant.slug)
+                      }
+                    >
+                      <Share className="mr-2 h-4 w-4" />
+                      Copy Link
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      className="flex-1"
+                      onClick={handleDownloadQr}
+                    >
+                      Download QR
+                    </Button>
+                  </div>
                 </div>
               </>
             ) : (
