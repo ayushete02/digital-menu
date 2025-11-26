@@ -2,11 +2,12 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Clipboard, Loader2, LogOut, Plus, Share, Store } from "lucide-react";
+import { Loader2, LogOut, Plus, QrCode, Share, Store } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import QRCode from "react-qr-code";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -51,6 +52,7 @@ const restaurantSchema = z.object({
 });
 
 type RestaurantValues = z.infer<typeof restaurantSchema>;
+type RestaurantSummary = RouterOutputs["restaurants"]["list"][number];
 
 type DashboardViewProps = {
   user: NonNullable<RouterOutputs["auth"]["current"]>;
@@ -86,6 +88,10 @@ export const DashboardView = ({
   };
 
   const [createOpen, setCreateOpen] = useState(false);
+  const [qrOpen, setQrOpen] = useState(false);
+  const [qrRestaurant, setQrRestaurant] = useState<RestaurantSummary | null>(
+    null
+  );
 
   const form = useForm<RestaurantValues>({
     resolver: zodResolver(restaurantSchema),
@@ -97,6 +103,11 @@ export const DashboardView = ({
     return process.env.NEXT_PUBLIC_APP_URL ?? "";
   }, []);
 
+  const menuLink = useMemo(() => {
+    if (!qrRestaurant) return "";
+    return `${origin}/menu/${qrRestaurant.slug}`;
+  }, [origin, qrRestaurant]);
+
   const handleCopyLink = async (slug: string) => {
     const link = `${origin}/menu/${slug}`;
     try {
@@ -106,6 +117,30 @@ export const DashboardView = ({
       console.error(error);
       toast.error("Unable to copy link", { description: link });
     }
+  };
+
+  const handleShowQr = (restaurant: RestaurantSummary) => {
+    setQrRestaurant(restaurant);
+    setQrOpen(true);
+  };
+
+  const handleDownloadQr = () => {
+    if (typeof window === "undefined" || !qrRestaurant) return;
+    const svg = document.getElementById("restaurant-qr-code");
+    if (!(svg instanceof SVGElement)) {
+      toast.error("Unable to download QR code");
+      return;
+    }
+
+    const serializer = new XMLSerializer();
+    const source = serializer.serializeToString(svg);
+    const blob = new Blob([source], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `${qrRestaurant.slug}-menu-qr.svg`;
+    anchor.click();
+    URL.revokeObjectURL(url);
   };
 
   const onSubmit = (values: RestaurantValues) => {
@@ -223,7 +258,7 @@ export const DashboardView = ({
                 variant="secondary"
                 onClick={() => handleCopyLink(restaurant.slug)}
               >
-                <Share className="mr-2 h-4 w-4" /> Share menu
+                <Share className="mr-2 h-4 w-4" /> Copy share link
               </Button>
               <Button
                 variant="outline"
@@ -233,11 +268,8 @@ export const DashboardView = ({
               >
                 Manage menu
               </Button>
-              <Button
-                variant="ghost"
-                onClick={() => handleCopyLink(restaurant.slug)}
-              >
-                <Clipboard className="mr-2 h-4 w-4" /> QR page link
+              <Button variant="ghost" onClick={() => handleShowQr(restaurant)}>
+                <QrCode className="mr-2 h-4 w-4" /> Show QR code
               </Button>
             </CardContent>
           </Card>
@@ -259,6 +291,64 @@ export const DashboardView = ({
           </Card>
         )}
       </div>
+
+      <Dialog
+        open={qrOpen}
+        onOpenChange={(open) => {
+          setQrOpen(open);
+          if (!open) setQrRestaurant(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>QR code</DialogTitle>
+            <DialogDescription>
+              Share this code with guests so they can open the menu instantly.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col items-center gap-4 py-4">
+            {qrRestaurant ? (
+              <>
+                <div className="rounded-2xl bg-white p-4 shadow-sm">
+                  <QRCode
+                    id="restaurant-qr-code"
+                    value={menuLink || ""}
+                    size={200}
+                    bgColor="var(--color-card)"
+                    fgColor="var(--color-foreground)"
+                  />
+                </div>
+                <div className="text-center text-sm text-muted-foreground">
+                  {menuLink}
+                </div>
+                <div className="flex w-full flex-col gap-2 sm:flex-row">
+                  <Button
+                    type="button"
+                    className="flex-1"
+                    onClick={() =>
+                      qrRestaurant && handleCopyLink(qrRestaurant.slug)
+                    }
+                  >
+                    Copy link
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="flex-1"
+                    onClick={handleDownloadQr}
+                  >
+                    Download SVG
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <div className="py-8 text-sm text-muted-foreground">
+                Select a restaurant to generate a QR code.
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

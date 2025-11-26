@@ -1,24 +1,27 @@
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 
-import { createCallerFactory } from "~/server/api/root";
+import { appRouter } from "~/server/api/root";
 import { createTRPCContext } from "~/server/api/trpc";
 
 import { MenuView } from "./_components/menu-view";
 
-const createCaller = createCallerFactory(createTRPCContext);
+type RouteParams = {
+  slug: string;
+};
 
 export default async function MenuPage({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<RouteParams>;
 }) {
-  const headerList = headers();
-  const caller = createCaller({
-    headers: new Headers(headerList as HeadersInit),
-  });
+  const headerList = await headers();
+  const caller = appRouter.createCaller(
+    await createTRPCContext({ headers: new Headers(headerList) })
+  );
 
-  const restaurant = await caller.menu.bySlug({ slug: params.slug });
+  const { slug } = await params;
+  const restaurant = await caller.menu.bySlug({ slug });
 
   if (!restaurant) notFound();
 

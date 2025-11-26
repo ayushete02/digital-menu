@@ -44,64 +44,7 @@ const categorySchema = z.object({
 const dishSchema = z.object({
   name: z.string().min(2).max(120),
   description: z.string().max(600).optional(),
-  price: z.coerce.number().min(0).max(1000000).optional(),
-  imageUrl: z.string().url().optional(),
-  spiceLevel: z.string().max(50).optional(),
-  categoryIds: z
-    .array(z.string().cuid())
-    .min(1, "Select at least one category"),
-});
-
-type RestaurantDetail = RouterOutputs["restaurants"]["detail"];
-type RestaurantDish = RouterOutputs["restaurants"]["detail"]["dishes"][number];
-
-("use client");
-
-import { useMemo } from "react";
-import { useRouter } from "next/navigation";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { ChevronLeft, Loader2, Pizza } from "lucide-react";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
-import { z } from "zod";
-
-import { Button } from "~/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "~/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "~/components/ui/form";
-import { Input } from "~/components/ui/input";
-import { ScrollArea } from "~/components/ui/scroll-area";
-import { Separator } from "~/components/ui/separator";
-import { Textarea } from "~/components/ui/textarea";
-import { api, type RouterOutputs } from "~/trpc/react";
-
-const restaurantSchema = z.object({
-  name: z.string().min(2).max(120),
-  location: z.string().min(2).max(120),
-});
-
-const categorySchema = z.object({
-  name: z.string().min(2).max(80),
-  parentId: z.string().cuid().optional(),
-  displayOrder: z.coerce.number().int().min(0).optional(),
-});
-
-const dishSchema = z.object({
-  name: z.string().min(2).max(120),
-  description: z.string().max(600).optional(),
-  price: z.coerce.number().min(0).max(1_000_000).optional(),
+  price: z.number().min(0).max(1_000_000).optional(),
   imageUrl: z.string().url().optional(),
   spiceLevel: z.string().max(50).optional(),
   categoryIds: z
@@ -148,10 +91,10 @@ export const RestaurantManager = ({ restaurantId, initialData }: Props) => {
       toast.success("Dish created");
       dishForm.reset({
         name: "",
-        description: "",
+        description: undefined,
         price: undefined,
-        imageUrl: "",
-        spiceLevel: "",
+        imageUrl: undefined,
+        spiceLevel: undefined,
         categoryIds: [],
       });
       router.refresh();
@@ -163,7 +106,7 @@ export const RestaurantManager = ({ restaurantId, initialData }: Props) => {
     resolver: zodResolver(restaurantSchema),
     defaultValues: {
       name: restaurant.name,
-      location: restaurant.location,
+      location: restaurant.location ?? "",
     },
   });
 
@@ -176,10 +119,10 @@ export const RestaurantManager = ({ restaurantId, initialData }: Props) => {
     resolver: zodResolver(dishSchema),
     defaultValues: {
       name: "",
-      description: "",
+      description: undefined,
       price: undefined,
-      imageUrl: "",
-      spiceLevel: "",
+      imageUrl: undefined,
+      spiceLevel: undefined,
       categoryIds: [],
     },
   });
@@ -205,17 +148,36 @@ export const RestaurantManager = ({ restaurantId, initialData }: Props) => {
   }, [restaurant.categories]);
 
   const onUpdateRestaurant = restaurantForm.handleSubmit((values) => {
-    updateRestaurant.mutate({ restaurantId, ...values });
+    updateRestaurant.mutate({
+      restaurantId,
+      name: values.name.trim(),
+      location: values.location.trim(),
+    });
   });
 
   const onCreateCategory = categoryForm.handleSubmit((values) => {
-    createCategory.mutate({ restaurantId, ...values });
+    createCategory.mutate({
+      restaurantId,
+      name: values.name.trim(),
+      parentId: values.parentId,
+      displayOrder:
+        values.displayOrder !== undefined && !Number.isNaN(values.displayOrder)
+          ? values.displayOrder
+          : undefined,
+    });
   });
 
   const onCreateDish = dishForm.handleSubmit((values) => {
     createDish.mutate({
       restaurantId,
-      ...values,
+      name: values.name.trim(),
+      description: values.description?.trim() || undefined,
+      price:
+        values.price !== undefined && !Number.isNaN(values.price)
+          ? values.price
+          : undefined,
+      imageUrl: values.imageUrl?.trim() || undefined,
+      spiceLevel: values.spiceLevel?.trim() || undefined,
       categoryIds: selectedCategories,
     });
   });
@@ -316,6 +278,14 @@ export const RestaurantManager = ({ restaurantId, initialData }: Props) => {
                       <FormControl>
                         <select
                           {...field}
+                          value={field.value ?? ""}
+                          onChange={(event) =>
+                            field.onChange(
+                              event.target.value === ""
+                                ? undefined
+                                : event.target.value
+                            )
+                          }
                           className="block w-full rounded-md border border-border bg-background px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none"
                         >
                           <option value="">None</option>
@@ -337,7 +307,20 @@ export const RestaurantManager = ({ restaurantId, initialData }: Props) => {
                     <FormItem>
                       <FormLabel>Display order (optional)</FormLabel>
                       <FormControl>
-                        <Input type="number" placeholder="0" {...field} />
+                        <Input
+                          type="number"
+                          placeholder="0"
+                          {...field}
+                          value={field.value ?? ""}
+                          onChange={(event) => {
+                            const value = event.target.value;
+                            field.onChange(
+                              value === ""
+                                ? undefined
+                                : Number.parseInt(value, 10)
+                            );
+                          }}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -419,6 +402,14 @@ export const RestaurantManager = ({ restaurantId, initialData }: Props) => {
                           rows={3}
                           placeholder="Describe the dish"
                           {...field}
+                          value={field.value ?? ""}
+                          onChange={(event) =>
+                            field.onChange(
+                              event.target.value === ""
+                                ? undefined
+                                : event.target.value
+                            )
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -438,6 +429,15 @@ export const RestaurantManager = ({ restaurantId, initialData }: Props) => {
                             step="0.01"
                             placeholder="140"
                             {...field}
+                            value={field.value ?? ""}
+                            onChange={(event) => {
+                              const value = event.target.value;
+                              field.onChange(
+                                value === ""
+                                  ? undefined
+                                  : Number.parseFloat(value)
+                              );
+                            }}
                           />
                         </FormControl>
                         <FormMessage />
@@ -451,7 +451,18 @@ export const RestaurantManager = ({ restaurantId, initialData }: Props) => {
                       <FormItem>
                         <FormLabel>Spice level (optional)</FormLabel>
                         <FormControl>
-                          <Input placeholder="Mild" {...field} />
+                          <Input
+                            placeholder="Mild"
+                            {...field}
+                            value={field.value ?? ""}
+                            onChange={(event) =>
+                              field.onChange(
+                                event.target.value === ""
+                                  ? undefined
+                                  : event.target.value
+                              )
+                            }
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -465,7 +476,18 @@ export const RestaurantManager = ({ restaurantId, initialData }: Props) => {
                     <FormItem>
                       <FormLabel>Image URL (optional)</FormLabel>
                       <FormControl>
-                        <Input placeholder="https://..." {...field} />
+                        <Input
+                          placeholder="https://..."
+                          {...field}
+                          value={field.value ?? ""}
+                          onChange={(event) =>
+                            field.onChange(
+                              event.target.value === ""
+                                ? undefined
+                                : event.target.value
+                            )
+                          }
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

@@ -1,40 +1,38 @@
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 
-import { createCallerFactory } from "~/server/api/root";
+import { appRouter } from "~/server/api/root";
 import { createTRPCContext } from "~/server/api/trpc";
 
 import { RestaurantManager } from "./_components/restaurant-manager";
 
-const createCaller = createCallerFactory(createTRPCContext);
-
-type Params = {
-  params: {
-    restaurantId: string;
-  };
+type RouteParams = {
+  restaurantId: string;
 };
 
-export default async function RestaurantPage({ params }: Params) {
-  const headerList = headers();
-  const caller = createCaller({
-    headers: new Headers(headerList as HeadersInit),
-  });
+export default async function RestaurantPage({
+  params,
+}: {
+  params: Promise<RouteParams>;
+}) {
+  const headerList = await headers();
+  const caller = appRouter.createCaller(
+    await createTRPCContext({ headers: new Headers(headerList) })
+  );
 
+  const { restaurantId } = await params;
   const user = await caller.auth.current();
   if (!user) redirect("/login");
 
   const restaurant = await caller.restaurants.detail({
-    restaurantId: params.restaurantId,
+    restaurantId,
   });
 
   if (!restaurant) notFound();
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-8">
-      <RestaurantManager
-        restaurantId={params.restaurantId}
-        initialData={restaurant}
-      />
+      <RestaurantManager restaurantId={restaurantId} initialData={restaurant} />
     </div>
   );
 }
