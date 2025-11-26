@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { attachSessionCookie } from "~/server/auth/session";
 import { verifyLoginCode } from "~/server/auth/service";
+import { checkRateLimit, getClientIp } from "~/server/lib/rate-limit";
 
 const schema = z.object({
   email: z.string().email(),
@@ -13,6 +14,22 @@ const schema = z.object({
 
 export async function POST(req: Request) {
   try {
+    // Rate limit: 10 verification attempts per 15 minutes per IP
+    const clientIp = getClientIp(req);
+    const rateLimitResult = checkRateLimit(`verify:${clientIp}`, {
+      maxRequests: 10,
+      windowMs: 15 * 60 * 1000,
+    });
+
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        {
+          error: `Too many verification attempts. Please try again in ${rateLimitResult.retryAfter} seconds.`,
+        },
+        { status: 429 },
+      );
+    }
+
     const json = await req.json();
     const parsed = schema.parse(json);
     const { user, sessionToken } = await verifyLoginCode(parsed);
