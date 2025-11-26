@@ -29,8 +29,8 @@ Create a `.env` file based on `.env.example` and configure:
 
 - `DATABASE_URL` – Neon PostgreSQL connection string
 - `SESSION_SECRET` – long random string for HMAC + session signing
-- `RESEND_API_KEY` *(optional)* – enable transactional email for login codes
-- `EMAIL_FROM_ADDRESS` *(optional)* – custom from address when using Resend
+- `EMAIL_FROM_ADDRESS` *(optional)* – custom from address when sending email
+- `SMTP_EMAIL` / `SMTP_APP_PASSWORD` *(optional)* – Gmail address + app password when using Nodemailer
 - `NEXT_PUBLIC_APP_URL` – canonical URL (used for QR/link generation during SSR)
 
 ## Architecture & Approach
@@ -49,7 +49,7 @@ Create a `.env` file based on `.env.example` and configure:
 - Category & dish management including multi-category assignment per dish
 - Public menu page with sticky active section indicator and floating navigator
 - QR code dialog with SVG download + share link copy helper
-- Resend fallback logging prints login codes in development for fast QA
+- Gmail SMTP (via Nodemailer) with console fallback for OTP delivery during development
 
 ## Tooling & Workflow Notes
 

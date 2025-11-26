@@ -44,7 +44,9 @@ export const requestLoginCode = async (emailRaw: string) => {
     },
   });
 
-  await sendLoginCodeEmail(email, code);
+  const delivery = await sendLoginCodeEmail(email, code);
+
+  return delivery;
 };
 
 export const verifyLoginCode = async (input: {

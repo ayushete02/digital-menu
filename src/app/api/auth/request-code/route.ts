@@ -11,8 +11,8 @@ export async function POST(req: Request) {
   try {
     const json = await req.json();
     const { email } = schema.parse(json);
-    await requestLoginCode(email);
-    return new NextResponse(null, { status: 204 });
+    const result = await requestLoginCode(email);
+    return NextResponse.json(result, { status: 200 });
   } catch (error) {
     console.error("[auth.request-code]", error);
     if (error instanceof z.ZodError) {

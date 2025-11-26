@@ -9,8 +9,9 @@ export const env = createEnv({
   server: {
     DATABASE_URL: z.string().url(),
     DIRECT_URL: z.string().url().optional(),
-    RESEND_API_KEY: z.string().min(1).optional(),
     EMAIL_FROM_ADDRESS: z.string().email().optional(),
+    SMTP_EMAIL: z.string().email().optional(),
+    SMTP_APP_PASSWORD: z.string().min(16).optional(),
     SESSION_SECRET: z.string().min(32),
     NODE_ENV: z
       .enum(["development", "test", "production"])
@@ -33,8 +34,9 @@ export const env = createEnv({
   runtimeEnv: {
     DATABASE_URL: process.env.DATABASE_URL,
     DIRECT_URL: process.env.DIRECT_URL,
-    RESEND_API_KEY: process.env.RESEND_API_KEY,
     EMAIL_FROM_ADDRESS: process.env.EMAIL_FROM_ADDRESS,
+    SMTP_EMAIL: process.env.SMTP_EMAIL,
+    SMTP_APP_PASSWORD: process.env.SMTP_APP_PASSWORD,
     SESSION_SECRET: process.env.SESSION_SECRET,
     NODE_ENV: process.env.NODE_ENV,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,

@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { Info } from "lucide-react";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -28,11 +29,16 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+type RequestCodeResponse =
+  | { success: true; channel: "smtp" }
+  | { success: false; channel: "console"; fallbackCode?: string };
+
 export const LoginForm = () => {
   const router = useRouter();
   const [step, setStep] = useState<"email" | "code">("email");
   const [isLoading, setIsLoading] = useState(false);
   const [emailSentTo, setEmailSentTo] = useState<string | null>(null);
+  const [manualCode, setManualCode] = useState<string | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -56,10 +62,24 @@ export const LoginForm = () => {
       if (!res.ok) {
         throw new Error("Unable to send code");
       }
+      const payload = (await res
+        .json()
+        .catch(() => null)) as RequestCodeResponse | null;
       setEmailSentTo(values.email);
-      toast.success("Verification code sent", {
-        description: "Please check your inbox for the 6-digit code.",
-      });
+      if (payload?.success) {
+        setManualCode(null);
+        toast.success("Verification code sent", {
+          description: "Please check your inbox for the 6-digit code.",
+        });
+      } else {
+        const fallback = payload?.fallbackCode ?? null;
+        setManualCode(fallback);
+        toast.success("Code ready", {
+          description: fallback
+            ? "Email delivery failed. Hover the info icon to view it."
+            : "Email delivery failed. Check with support for your code.",
+        });
+      }
       setStep("code");
     } catch (error) {
       console.error(error);
@@ -136,7 +156,24 @@ export const LoginForm = () => {
             <p className="text-sm text-muted-foreground">
               Enter the 6-digit code sent to{" "}
               <span className="font-medium">{emailSentTo}</span>.
+              {manualCode && (
+                <span
+                  className="ml-2 inline-flex items-center text-primary"
+                  title={`Email delivery failed. Use code ${manualCode}.`}
+                >
+                  <Info className="h-4 w-4" aria-hidden="true" />
+                  <span className="sr-only">
+                    Email delivery failed. Use the displayed code.
+                  </span>
+                </span>
+              )}
             </p>
+            {manualCode && (
+              <p className="text-xs text-muted-foreground">
+                Your one-time code is{" "}
+                <span className="font-semibold">{manualCode}</span>.
+              </p>
+            )}
             <FormField
               control={form.control}
               name="code"
@@ -204,6 +241,7 @@ export const LoginForm = () => {
                 form.setValue("code", undefined);
                 form.setValue("name", undefined);
                 form.setValue("country", undefined);
+                setManualCode(null);
               }}
             >
               Use a different email
