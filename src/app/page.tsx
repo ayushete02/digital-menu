@@ -1,9 +1,5 @@
-import { redirect } from "next/navigation";
+import LandingPage from "./landing-page";
 
-import { getCurrentSession } from "~/server/auth/session";
-
-export default async function HomePage() {
-  const session = await getCurrentSession();
-
-  redirect(session ? "/dashboard" : "/login");
+export default function Home() {
+  return <LandingPage />;
 }
