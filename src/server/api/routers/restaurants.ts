@@ -3,7 +3,8 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { makeSlug } from "~/lib/slug";
-import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+import { imageUrlSchema } from "~/lib/validators";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "~/server/api/trpc";
 
 const restaurantSelect = {
   id: true,
@@ -107,6 +108,14 @@ const generateUniqueCategorySlug = async (
 };
 
 export const restaurantRouter = createTRPCRouter({
+  // Public endpoint to list all restaurants
+  listAll: publicProcedure.query(async ({ ctx }) => {
+    return ctx.db.restaurant.findMany({
+      orderBy: { createdAt: "desc" },
+      select: restaurantSelect,
+    });
+  }),
+
   list: protectedProcedure.query(async ({ ctx }) => {
     return ctx.db.restaurant.findMany({
       where: { ownerId: ctx.user.id },
@@ -312,14 +321,14 @@ export const restaurantRouter = createTRPCRouter({
     .input(
       z.object({
         restaurantId: restaurantIdSchema,
-        name: z.string().min(2).max(120),
-        description: z.string().max(600).optional(),
+        name: z.string().min(2).max(120).transform((val) => val.trim()),
+        description: z.string().max(600).transform((val) => val.trim()).optional(),
         price: z.number().min(0).max(1000000).optional(),
-        imageUrl: z.string().url().optional(),
-        spiceLevel: z.string().max(50).optional(),
+        imageUrl: imageUrlSchema.optional(),
+        spiceLevel: z.string().max(50).transform((val) => val.trim()).optional(),
         isAvailable: z.boolean().optional(),
         sortOrder: z.number().int().optional(),
-        categoryIds: z.array(cuidSchema).min(1),
+        categoryIds: z.array(cuidSchema).min(1, "At least one category is required"),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -366,11 +375,11 @@ export const restaurantRouter = createTRPCRouter({
       z.object({
         dishId: cuidSchema,
         restaurantId: restaurantIdSchema,
-        name: z.string().min(2).max(120).optional(),
-        description: z.string().max(600).optional().nullable(),
+        name: z.string().min(2).max(120).transform((val) => val.trim()).optional(),
+        description: z.string().max(600).transform((val) => val.trim()).optional().nullable(),
         price: z.number().min(0).max(1000000).optional().nullable(),
-        imageUrl: z.string().url().optional().nullable(),
-        spiceLevel: z.string().max(50).optional().nullable(),
+        imageUrl: imageUrlSchema.nullable().optional(),
+        spiceLevel: z.string().max(50).transform((val) => val.trim()).optional().nullable(),
         isAvailable: z.boolean().optional(),
         sortOrder: z.number().int().optional(),
         categoryIds: z.array(cuidSchema).optional(),

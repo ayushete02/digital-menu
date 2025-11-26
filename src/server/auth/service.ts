@@ -12,9 +12,9 @@ import {
 import { persistSession } from "./session";
 import { sendLoginCodeEmail } from "../notifications/email";
 
-const emailSchema = z.string().email();
-const nameSchema = z.string().min(2).max(120);
-const countrySchema = z.string().min(2).max(120);
+const emailSchema = z.string().email().transform((val) => val.toLowerCase().trim());
+const nameSchema = z.string().min(2).max(120).transform((val) => val.trim());
+const countrySchema = z.string().min(2).max(120).transform((val) => val.trim());
 
 export const requestLoginCode = async (emailRaw: string) => {
   const email = emailSchema.parse(emailRaw.toLowerCase().trim());
