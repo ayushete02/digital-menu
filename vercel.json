@@ -5,10 +5,10 @@
   "framework": "nextjs",
   "regions": ["iad1"],
   "env": {
-    "DATABASE_URL": "@database_url",
-    "DIRECT_URL": "@direct_url",
-    "SESSION_SECRET": "@session_secret",
-    "NEXT_PUBLIC_APP_URL": "@next_public_app_url"
+    "DATABASE_URL": "@DATABASE_URL",
+    "DIRECT_URL": "@DIRECT_URL",
+    "SESSION_SECRET": "@SESSION_SECRET",
+    "NEXT_PUBLIC_APP_URL": "@NEXT_PUBLIC_APP_URL"
   },
   "headers": [
     {
