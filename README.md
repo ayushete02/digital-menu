@@ -291,62 +291,124 @@ src/
 - **Visual Studio Code** with GitHub Copilot extension
 
 ### AI Models & Tools
-1. **GitHub Copilot** (GPT-4)
-   - Code completion and suggestions
-   - Boilerplate generation
+1. **GitHub Copilot**
+   - Real-time code completion and suggestions
+   - Boilerplate generation for components and routers
    - TypeScript type inference assistance
+   - Inline documentation generation
+   - Context-aware function implementations
 
-2. **Claude 3.5 Sonnet** (via Anthropic)
-   - Architecture planning
+2. **Claude 4.5 Sonnet**
+   - Architecture planning and system design
    - Complex problem decomposition
    - Error debugging and troubleshooting
-   - README documentation
+   - Code review and optimization suggestions
+   - Documentation writing and README structure
+   - Database schema design assistance
 
-### Prompts Used
+3. **ChatGPT 5.1 Codex**
+   - Algorithm optimization and logic refinement
+   - Complex TypeScript type definitions
+   - Advanced tRPC router implementations
+   - Security best practices consultation
+   - Performance optimization strategies
+
+### Sample Prompts Used
 
 **Initial Setup:**
 ```
-"Create a T3 Stack app with Next.js 15, Prisma, PostgreSQL, and TypeScript. Skip NextAuth. Set up email-based authentication with OTP codes."
+"Create a T3 Stack app with Next.js 15, Prisma, PostgreSQL, and TypeScript. Skip NextAuth during initialization. Set up custom email-based authentication with OTP verification codes sent via email."
 ```
 
 **Schema Design:**
 ```
-"Design a Prisma schema for a restaurant menu system. Requirements: Users own multiple restaurants, restaurants have categories, categories can be hierarchical, dishes belong to multiple categories."
+"Design a Prisma schema for a restaurant menu management system with the following requirements:
+- Users can own multiple restaurants
+- Restaurants have categories (e.g., Starters, Main Course)
+- Categories can be hierarchical (parent-child relationship)
+- Dishes can belong to multiple categories simultaneously
+- Include fields for spice level, images, availability toggles
+- Add proper indexes for performance"
+```
+
+**Authentication Flow:**
+```
+"Implement a custom authentication system without NextAuth:
+- Email verification with 6-digit OTP codes
+- Code expires after 10 minutes
+- Store hashed codes in database
+- Session management with httpOnly cookies
+- Add rate limiting to prevent abuse
+- Handle both new user registration and existing user login in same flow"
 ```
 
 **UI Components:**
 ```
-"Create a mobile-first menu view with sticky header, IntersectionObserver for active section tracking, and floating navigation. Match the design: rounded sections, muted colors, category indicators."
+"Create a mobile-first menu view component matching these requirements:
+- Sticky header with active category name that updates while scrolling
+- Use IntersectionObserver to track which section is currently visible
+- Floating 'Menu' button that opens a category navigation sheet
+- Smooth scroll to category sections
+- Design with rounded cards, muted pink/rose color scheme
+- Display dishes with images, descriptions, spice level badges, and prices"
 ```
 
-**Error Handling:**
+**Menu Management Dashboard:**
 ```
-"Add comprehensive error boundaries, rate limiting on auth routes, and input validation for image URLs and text fields. Prevent XSS and SQL injection."
+"Build a restaurant management dashboard with:
+- Card-based layout showing all user's restaurants
+- QR code generation for each menu
+- Share link with copy-to-clipboard functionality
+- Create/edit restaurant forms with validation
+- Nested category and dish management
+- Multi-select for assigning dishes to categories"
+```
+
+**Error Handling & Validation:**
+```
+"Add comprehensive error handling:
+- Rate limiting on auth endpoints (IP + email-based)
+- Input validation for image URLs (HTTPS-only, whitelist domains)
+- Prevent XSS attacks with input sanitization
+- Handle database errors gracefully
+- Add loading states and error boundaries
+- Validate user permissions before mutations"
 ```
 
 ### AI Tool Effectiveness
 
-**What worked well:**
-- ✅ Rapid boilerplate generation (tRPC routers, form schemas)
-- ✅ TypeScript type inference and completion
-- ✅ Debugging complex Prisma queries
-- ✅ Suggesting edge cases I hadn't considered
-- ✅ Generating consistent component patterns
+**What worked extremely well:**
+- ✅ **GitHub Copilot**: Lightning-fast inline code completion, accurate TypeScript type inference, boilerplate generation for components
+- ✅ **Claude 4.5**: Exceptional at architecture planning, system design, and explaining complex concepts in documentation
+- ✅ **ChatGPT 5.1 Codex**: Superior for algorithm optimization, advanced type definitions, and performance tuning strategies
+- ✅ Rapid prototyping of tRPC routers, form schemas, and UI components
+- ✅ Debugging complex Prisma queries and many-to-many relations
+- ✅ Suggesting edge cases I hadn't considered (expired codes, consumed codes, race conditions)
+- ✅ Generating consistent component patterns and naming conventions across the app
+- ✅ Security best practices (rate limiting, input sanitization, session management)
+- ✅ Writing comprehensive documentation with proper markdown formatting
 
-**AI Mistakes Corrected:**
-- ❌ Initial suggestion used NextAuth (requirement was to avoid it)
-- ❌ Forgot to add indexes on foreign keys (performance issue)
-- ❌ Generated Tailwind v3 syntax (updated to v4)
-- ❌ Suggested client-side rate limiting (moved to server)
-- ❌ Omitted `transform` in Zod schemas for trimming input
-- ❌ Used deprecated `baseUrl` in tsconfig.json
+**AI Mistakes Identified and Corrected:**
+- ❌ **NextAuth Suggestion** (Copilot): Initial T3 setup wanted to include NextAuth, but requirement explicitly stated to skip it. Had to manually remove and build custom auth from scratch.
+- ❌ **Missing Database Indexes** (ChatGPT): Forgot to add indexes on foreign keys and frequently queried fields initially, which would impact query performance. Added `@@index` directives manually to schema.
+- ❌ **Tailwind Version Confusion** (Copilot): Generated Tailwind v3 syntax with `@tailwind` directives, but project uses v4. Updated to `@tailwindcss/postcss` plugin approach.
+- ❌ **Client-Side Rate Limiting** (ChatGPT): Suggested implementing rate limiting in client components, which is insecure and bypassable. Moved entirely to server-side API routes with IP tracking.
+- ❌ **Zod Transform Missing** (Copilot): Omitted `.transform()` in Zod schemas for trimming user input, leading to validation issues with trailing spaces and inconsistent data.
+- ❌ **Deprecated tsconfig.json** (Claude): Used deprecated `baseUrl` in tsconfig.json. Replaced with modern `paths` configuration for module resolution.
+- ❌ **Session Token Exposure** (ChatGPT): Initially suggested storing session tokens in localStorage, which is vulnerable to XSS. Corrected to use httpOnly cookies.
+- ❌ **Image URL Validation** (Copilot): First iteration allowed any URL including HTTP and data URLs. Added HTTPS requirement and domain whitelist for security.
+- ❌ **Race Condition in OTP** (Claude): Didn't handle concurrent OTP requests for same email. Added database-level unique constraints and proper transaction handling.
 
-**Human Oversight Required:**
-- Security review of authentication flow
-- Performance optimization of database queries
-- UX refinements based on user testing
-- Production deployment configuration
-- Environment variable documentation
+**Human Oversight and Manual Corrections Required:**
+- **Security Audit**: Carefully reviewed entire authentication flow to ensure no vulnerabilities (HMAC-based tokens, proper expiration, httpOnly cookies, CSRF protection)
+- **Cross-Tool Verification**: Each AI tool had different approaches; manually tested and chose the best solution (e.g., session management strategy)
+- **Edge Case Testing**: Manually tested scenarios AI tools didn't suggest (network timeouts, database connection loss, concurrent mutations)
+- **Performance Optimization**: Added strategic database indexes, optimized Prisma queries with proper `select` and `include` statements
+- **UX Refinements**: Tuned scroll offsets, intersection observer thresholds, and transition timings based on manual testing
+- **Production Configuration**: Set up proper environment variables, Vercel deployment settings, and database connection pooling
+- **Error Messages**: Made error messages user-friendly instead of exposing technical details
+- **Edge Case Handling**: Added logic for duplicate slugs, empty states, network failures, and fallback scenarios
+- **Accessibility**: Ensured proper ARIA labels, keyboard navigation, and semantic HTML beyond what AI suggested
 
 ## 🎯 Final Thoughts
 
@@ -366,50 +428,3 @@ The Digital Menu Management System is ready for deployment and real-world use, w
 **Deployment:** [https://digitalmenu02.vercel.app](https://digitalmenu02.vercel.app)  
 **Developer:** Ayush Shete  
 **Completed:** November 2025
-- QR code dialog with SVG download + share link copy helper
-- Gmail SMTP (via Nodemailer) with console fallback for OTP delivery during development
-
-## Tooling & Workflow Notes
-
-- **IDE**: Visual Studio Code
-- **Primary packages**: `next`, `@trpc/server`, `@tanstack/react-query`, `prisma`, `tailwindcss`, `react-qr-code`, `lucide-react`, `shadcn/ui`
-- **Code quality**: Strict TypeScript config, Prisma generated client colocated in `generated/prisma`, `npm run typecheck` gate
-
-## AI Assistance Log
-
-- **Model & tool**: GitHub Copilot (GPT-5-Codex Preview)
-- **Notable prompts**:
-	- _"Fix typecheck errors by removing leftover post router"_
-	- _"Add QR code dialog to dashboard cards"_
-	- _"Normalize form data before calling tRPC mutations"_
-- **Value add**: Accelerated boilerplate wiring (e.g., QR dialog) and highlighted schema mismatches. Required manual corrections around Zod preprocessing and React Hook Form typing where AI suggestions were too optimistic.
-
-## Edge Cases Considered
-
-- Prevent reuse of consumed/expired verification codes and prune stale entries
-- Enforce category ownership before dish association to avoid cross-tenant leaks
-- Handle empty menu states gracefully (no categories or dishes yet)
-- Convert blank optional fields to `undefined` before Prisma mutations to avoid invalid data
-- Clipboard API errors fallback with user-facing toast messages
-
-## Deferred Items / Next Steps
-
-- Bulk editing & reordering for dishes/categories (drag-and-drop roadmap)
-- Menu theming options per restaurant (colors, accent text)
-- Analytics on menu views and top-performing dishes
-- Accessibility audit for color contrast + keyboard navigation on the public menu
-
-## Deployment Checklist
-
-1. Provision Neon Postgres database and update `DATABASE_URL`
-2. Generate Prisma client: `npm run db:push`
-3. Configure Vercel project with required environment variables
-4. Set `NEXT_PUBLIC_APP_URL` to the Vercel domain
-5. Trigger build (`npm run build`) locally or via Vercel deployment
-6. Publish QR links and update README with the live URL
-
-## Assignment Footnotes
-
-- **Approach summary**: Leaned on server components for auth-sensitive screens, pushed business logic into tRPC routers, and mirrored the design reference with Tailwind + shadcn/ui.
-- **AI reflection**: GPT-5-Codex sped up iteration but required vigilance—particularly around Zod/React Hook Form interplay and Prisma type imports.
-- **Please update** the deployment URL and any organisation-specific notes before submitting the repository link.
