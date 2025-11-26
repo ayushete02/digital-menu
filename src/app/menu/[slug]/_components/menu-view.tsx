@@ -293,16 +293,17 @@ const DishCard = ({ dish }: DishCardProps) => {
             </p>
           )}
         </div>
-        {dish.imageUrl ? (
-          <div className="relative h-20 w-20 overflow-hidden rounded-xl border border-[#f1c7cf]">
-            <Image
-              src={dish.imageUrl}
-              alt={dish.name}
-              fill
-              className="object-cover"
-            />
-          </div>
-        ) : null}
+        <div className="relative h-20 w-20 overflow-hidden rounded-xl border border-[#f1c7cf]">
+          <Image
+            src={
+              dish.imageUrl ??
+              "https://i.pinimg.com/736x/ac/78/86/ac7886a9a369c2284351f96712e5d0aa.jpg"
+            }
+            alt={dish.name}
+            fill
+            className="object-cover"
+          />
+        </div>
       </CardContent>
     </Card>
   );

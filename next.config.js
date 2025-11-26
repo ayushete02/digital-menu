@@ -36,6 +36,10 @@ const config = {
         protocol: "https",
         hostname: "**.vercel-storage.com",
       },
+      {
+        protocol: "https",
+        hostname: "i.pinimg.com",
+      },
     ],
   },
   // Enable React strict mode for better error handling in development

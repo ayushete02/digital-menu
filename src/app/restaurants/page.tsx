@@ -13,8 +13,6 @@ import {
 } from "~/components/ui/card";
 import { api } from "~/trpc/react";
 
-import { api } from "~/trpc/react";
-
 export default function RestaurantsPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const { data: restaurants, isLoading } = api.restaurants.listAll.useQuery();
@@ -83,14 +81,15 @@ export default function RestaurantsPage() {
   return (
     <div className="min-h-screen bg-linear-to-b from-background to-muted/20">
       <div className="mx-auto max-w-6xl px-4 py-12">
-          <div className="mb-8 text-center">
-            <h1 className="text-4xl font-bold tracking-tight">
-              Browse Restaurants
-            </h1>
-            <p className="mt-2 text-lg text-muted-foreground">
-              View digital menus from our restaurants
-            </p>
-          </div>        {restaurants && restaurants.length > 0 ? (
+        <div className="mb-8 text-center">
+          <h1 className="text-4xl font-bold tracking-tight">
+            Browse Restaurants
+          </h1>
+          <p className="mt-2 text-lg text-muted-foreground">
+            View digital menus from our restaurants
+          </p>
+        </div>{" "}
+        {restaurants && restaurants.length > 0 ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {restaurants.map((restaurant) => {
               const menuUrl = `${appUrl}/menu/${restaurant.slug}`;
@@ -98,7 +97,9 @@ export default function RestaurantsPage() {
                 <Card
                   key={restaurant.id}
                   className="group overflow-hidden transition-all hover:shadow-xl cursor-pointer"
-                  onClick={() => window.location.href = `/menu/${restaurant.slug}`}
+                  onClick={() =>
+                    (window.location.href = `/menu/${restaurant.slug}`)
+                  }
                 >
                   <CardHeader className="space-y-1">
                     <CardTitle className="flex items-center gap-2">
@@ -115,11 +116,16 @@ export default function RestaurantsPage() {
                     )}
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                    <div
+                      className="flex gap-2"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <Button
                         variant="outline"
                         className="flex-1"
-                        onClick={() => handleShare(restaurant.name, restaurant.slug)}
+                        onClick={() =>
+                          handleShare(restaurant.name, restaurant.slug)
+                        }
                       >
                         <Share2 className="h-4 w-4 mr-2" />
                         Share
@@ -127,7 +133,9 @@ export default function RestaurantsPage() {
                       <Button
                         variant="outline"
                         className="flex-1"
-                        onClick={() => handleCopyLink(restaurant.slug, restaurant.id)}
+                        onClick={() =>
+                          handleCopyLink(restaurant.slug, restaurant.id)
+                        }
                       >
                         {copiedId === restaurant.id ? (
                           <>
@@ -157,7 +165,6 @@ export default function RestaurantsPage() {
             </CardHeader>
           </Card>
         )}
-
         <div className="mt-12 text-center">
           <p className="text-sm text-muted-foreground">
             Restaurant owner?{" "}

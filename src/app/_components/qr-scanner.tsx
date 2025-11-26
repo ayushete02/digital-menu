@@ -17,19 +17,23 @@ export function QrScanner() {
     // Check if device is mobile
     const checkMobile = () => {
       const userAgent = navigator.userAgent.toLowerCase();
-      const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
+      const isMobileDevice =
+        /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(
+          userAgent
+        );
       const isSmallScreen = window.innerWidth < 768;
       setIsMobile(isMobileDevice || isSmallScreen);
     };
 
     checkMobile();
-    window.addEventListener('resize', checkMobile);
-    
+    window.addEventListener("resize", checkMobile);
+
     return () => {
-      window.removeEventListener('resize', checkMobile);
+      window.removeEventListener("resize", checkMobile);
       // Cleanup on unmount
       if (scannerRef.current) {
-        scannerRef.current.stop()
+        scannerRef.current
+          .stop()
           .then(() => {
             if (scannerRef.current) {
               scannerRef.current.clear();
@@ -43,7 +47,9 @@ export function QrScanner() {
   const startScanning = async () => {
     // Don't allow scanning on desktop
     if (!isMobile) {
-      setError("QR scanning is only available on mobile devices. Desktop users should use the QR code display below.");
+      setError(
+        "QR scanning is only available on mobile devices. Desktop users should use the QR code display below."
+      );
       return;
     }
 
@@ -63,7 +69,7 @@ export function QrScanner() {
       }
 
       // Small delay to ensure cleanup is complete
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       // Create new scanner instance
       const scanner = new Html5Qrcode("qr-reader");
@@ -107,61 +113,79 @@ export function QrScanner() {
         setIsScanning(true);
         setIsReady(true);
       } catch (backCameraError) {
-        console.log("Back camera failed, trying any available camera:", backCameraError);
-        
+        console.log(
+          "Back camera failed, trying any available camera:",
+          backCameraError
+        );
+
         // If back camera fails, try to get any available camera
         const devices = await Html5Qrcode.getCameras();
-        
+
         if (devices && devices.length > 0) {
           // Try with the first available camera
-          await scanner.start(
-            devices[0].id,
-            config,
-            (decodedText) => {
-              console.log("QR Code detected:", decodedText);
-              stopScanning();
+          const firstDevice = devices[0];
+          if (firstDevice) {
+            await scanner.start(
+              firstDevice.id,
+              config,
+              (decodedText) => {
+                console.log("QR Code detected:", decodedText);
+                stopScanning();
 
-              if (decodedText.startsWith("http")) {
-                try {
-                  const url = new URL(decodedText);
-                  router.push(url.pathname);
-                } catch {
+                if (decodedText.startsWith("http")) {
+                  try {
+                    const url = new URL(decodedText);
+                    router.push(url.pathname);
+                  } catch {
+                    router.push(decodedText);
+                  }
+                } else {
                   router.push(decodedText);
                 }
-              } else {
-                router.push(decodedText);
+              },
+              (errorMessage) => {
+                // Scan errors are normal - ignore
               }
-            },
-            (errorMessage) => {
-              // Scan errors are normal - ignore
-            }
-          );
-          setIsScanning(true);
-          setIsReady(true);
+            );
+            setIsScanning(true);
+            setIsReady(true);
+          } else {
+            throw new Error("No cameras available on this device");
+          }
         } else {
           throw new Error("No cameras available on this device");
         }
       }
     } catch (err) {
       console.error("Failed to start scanner:", err);
-      
+
       setIsScanning(false);
       setIsReady(false);
-      
+
       if (err instanceof Error) {
-        if (err.message.includes("NotAllowedError") || err.message.includes("Permission")) {
-          setError("Camera permission denied. Please allow camera access in your browser settings.");
-        } else if (err.message.includes("NotFoundError") || err.message.includes("No cameras")) {
+        if (
+          err.message.includes("NotAllowedError") ||
+          err.message.includes("Permission")
+        ) {
+          setError(
+            "Camera permission denied. Please allow camera access in your browser settings."
+          );
+        } else if (
+          err.message.includes("NotFoundError") ||
+          err.message.includes("No cameras")
+        ) {
           setError("No camera found on this device.");
         } else if (err.message.includes("NotReadableError")) {
-          setError("Camera is being used by another app. Please close other camera apps.");
+          setError(
+            "Camera is being used by another app. Please close other camera apps."
+          );
         } else {
           setError(`Failed to start camera: ${err.message}`);
         }
       } else {
         setError("Failed to start camera. Please try again.");
       }
-      
+
       // Clean up on error
       if (scannerRef.current) {
         try {
